@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../supabase";
+import { generateTaskDescription } from "../utils/aiService";
 import "../Dashboard.css";
 
 export default function Tasks() {
@@ -20,6 +21,7 @@ export default function Tasks() {
   });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [generatingDescription, setGeneratingDescription] = useState(false);
   const navigate = useNavigate();
 
   async function load() {
@@ -170,6 +172,32 @@ export default function Tasks() {
     setTimeout(() => setSuccess(""), 3000);
   }
 
+  async function handleGenerateDescription() {
+    if (!formData.title || formData.title.trim() === "") {
+      setError("Please enter a task title first");
+      return;
+    }
+
+    setGeneratingDescription(true);
+    setError("");
+
+    try {
+      // Get project title if project is selected
+      const selectedProject = projects.find(p => p.id === formData.project_id);
+      const projectTitle = selectedProject ? selectedProject.title : null;
+
+      const description = await generateTaskDescription(formData.title, projectTitle);
+      setFormData({ ...formData, description });
+      setSuccess("Description generated successfully!");
+      setTimeout(() => setSuccess(""), 3000);
+    } catch (err) {
+      setError(err.message || "Failed to generate description. Please try again.");
+      setTimeout(() => setError(""), 5000);
+    } finally {
+      setGeneratingDescription(false);
+    }
+  }
+
   function getStatusBadge(status) {
     const statusClass = status === "completed" ? "status-completed" : 
                        status === "in-progress" ? "status-in-progress" : 
@@ -291,12 +319,49 @@ export default function Tasks() {
                   />
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Description</label>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                    <label className="form-label">Description</label>
+                    <button
+                      type="button"
+                      onClick={handleGenerateDescription}
+                      disabled={generatingDescription || !formData.title}
+                      className="btn-secondary"
+                      style={{
+                        padding: "0.4rem 0.8rem",
+                        fontSize: "0.875rem",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "0.4rem",
+                        opacity: (!formData.title || generatingDescription) ? 0.6 : 1,
+                        cursor: (!formData.title || generatingDescription) ? "not-allowed" : "pointer"
+                      }}
+                    >
+                      {generatingDescription ? (
+                        <>
+                          <span className="spinner" style={{
+                            display: "inline-block",
+                            width: "12px",
+                            height: "12px",
+                            border: "2px solid #e5e7eb",
+                            borderTopColor: "#6366f1",
+                            borderRadius: "50%",
+                            animation: "spin 0.6s linear infinite"
+                          }}></span>
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          ✨ Generate with AI
+                        </>
+                      )}
+                    </button>
+                  </div>
                   <textarea
                     className="form-textarea"
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
                     rows="3"
+                    placeholder={generatingDescription ? "Generating description..." : "Enter task description or click 'Generate with AI'"}
                   />
                 </div>
                 <div className="form-group">
