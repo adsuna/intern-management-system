@@ -286,19 +286,10 @@ This project is for educational purposes.
 
 ## 👤 Author
 
-Intern Management System - TIH Internship Project
+Aditya Suresh Nair
 
 ## 🙏 Acknowledgments
 
 - Supabase for backend infrastructure
 - Google Gemini for AI capabilities
 - React team for the amazing framework
-
----
-
-**Note**: This is a school project for internship management. For production use, consider adding:
-- Email notifications
-- Real-time updates
-- File attachments
-- Advanced analytics
-- Mobile app support
